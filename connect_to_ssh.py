@@ -7,13 +7,14 @@
 from __future__ import print_function
 import os
 import time
+import requests
 import paramiko
 import traceback
 
 paramiko.util.log_to_file('ssh.log')
 
 IP = ''
-USER = 'root'
+USER = ''
 PWD = ''
 PORT = 22
 
@@ -51,9 +52,22 @@ def patch_crypto_be_discovery():
 
 
 def main():
-    # upload_dir()
-    download_dir()
+    upload_dir()
+    notify_restart()
+    # download_dir()
     # restart_server()
+
+def notify_restart():
+    url = 'http://114.55.236.30:7979/admin/restart'
+    r = requests.get(url)
+    if r.text == "Success":
+        print(u'重启服务器成功')
+        time.sleep(2)
+    else:
+        print(u'重启失败', r.text)
+        time.sleep(3)
+
+
 
 def download_dir():
     s = paramiko.SSHClient()
@@ -74,16 +88,7 @@ def restart_server():
     s.connect(IP, PORT, USER, PWD)
 
     stdin, stdout, stderr = s.exec_command("bash -l -c 'cd /workspace;python ./restart.py'")
-    # stdin, stdout, stderr = s.exec_command("bash -l -c 'cd /workspace;./stop;./start;pwd;'")
-    # stdin, stdout, stderr = s.exec_command("/workspace/stop")
-    # stdin, stdout, stderr = s.exec_command("/workspace/start")
-
-    # stdin, stdout, stderr = s.exec_command('cd /workspace;python restart.py')
-    # stdin, stdout, stderr = s.exec_command('cd /workspace;python restart.py')
     print(stdout.read(), stderr.read())
-    # stdin, stdout, stderr = s.exec_command('python restart.py')
-    # stdin, stdout, stderr = s.exec_command('ls')
-    # print(stdout.read(), stderr.read())
     s.close()
 
 

@@ -13,6 +13,7 @@ import os
 def install_yum():
     os.system("yum -y groupinstall 'Development Tools'")
     os.system("yum -y yum install zlib-devel bzip2-devel  openssl-devel ncurses-deve")
+    os.system('yum  -y install readline-devel')
     
 def install_python3():
     os.system("yum -y yum install zlib-devel bzip2-devel  openssl-devel ncurses-deve")
@@ -32,10 +33,10 @@ def install_mysql():
     os.system('yum -y install mysql-server')
 
 def main():
-    os.system('su -')
-    # install_yum()
-    # install_python3()
-    install_mysql()
+    # os.system('su -')
+    install_yum()
+    install_python3()
+    # install_mysql()
 
 if __name__ == '__main__':
     main()

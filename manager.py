@@ -47,9 +47,15 @@ def stop(name, count):
 
 # 重启
 @click.command()
-@click.option('--name', default='tuan', help='server name')
+@click.option('--name', help='server name')
 def restart(name):
-    pass
+    if not name:
+        print('restart')
+        stop_by_order()
+        start_by_order()
+    else:
+        print('pass')
+        pass
 
 manager.add_command(start)
 manager.add_command(stop)

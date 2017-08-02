@@ -16,6 +16,44 @@ equipquery = 'http://xyq.cbg.163.com/cgi-bin/equipquery.py?act=overall_search_sh
 def main():
     pass
 
+'''
+({  [
+)}  ]
+s = s.replace('({', '[')
+s = s.replace('})', ']')
+s = s.replace('([', '{')
+
+s = s.replace(',]', '}')
+s=s.replace(':([', ':{')
+s=s.replace('])', '}')
+
+s = s.replace('(', '')
+
+s = s.replace(')', '')
+s='{' + s[1:]
+s = re.sub(r'(\d+:)', '"aaa":', s)
+s = s.replace('}}}', '}]}')
+'''
+
+
+def foo(s):
+    '''
+    ({  [
+    )}  ]
+    s = s.replace('({([', '{')
+    s = s.replace
+    s = s.replace(',]', '}')
+    s=s.replace(':([', ':{')
+    s=s.replace('])', '}')
+
+    s = s.replace('(', '')
+
+    s = s.replace(')', '')
+    s='{' + s[1:]
+    s = re.sub(r'(\d+:)', '"aaa":', s)
+    '''
+    return s
+
 
 if __name__ == '__main__':
     main()

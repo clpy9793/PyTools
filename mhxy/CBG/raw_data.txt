@@ -3,10 +3,7 @@
     "iHp_Eff":2722,
     "iBeastSki2":17,
     "commu_name":"",
-    "propKept":
-        (
-            [
-                1:(["iRes":310,"iMag":114,"iStr":617,"iCor":121,"iSpe":119,]),
+    "propKept":([1:(["iRes":310,"iMag":114,"iStr":617,"iCor":121,"iSpe":119,]),
                 0:(["iRes":435,"iMag":114,"iStr":495,"iCor":121,"iSpe":119,]),
                 2:(["iRes":121,"iMag":114,"iStr":809,"iCor":121,"iSpe":119,]),
             ]
@@ -29,15 +26,8 @@
     "datang_feat":5703,
     "i3FlyLv":0,
     "iGoodness":1106,
-    "AllRider":
-        (
-            [
-                1:(
-                    ["exgrow":22892,
-                    "all_skills":([600:3,601:2,]),
-                    "mattrib":"力量",
-                    "ExtraGrow":100,
-                    "iGrade":125,
+    "AllRider":([1:(["exgrow":22892,
+                    "all_skills":([600:3,601:2,]),"mattrib":"力量","ExtraGrow":100,"iGrade":125,
                     "iType":508,]),
                 3:(
                     ["exgrow":16971,

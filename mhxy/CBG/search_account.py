@@ -52,48 +52,53 @@ validate_url = 'http://xyq.cbg.163.com//cgi-bin/equipquery.py?act=check_search_c
 
 
 def main():
-    pages = [url.format(i) for i in range(1, 10)]
-    tasks = [parse_first_page(i) for i in pages]
+    # pages = [url.format(i) for i in range(1, 10)]
+    # tasks = [parse_first_page(i) for i in pages]
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(asyncio.gather(*tasks))
+    # loop.run_until_complete(asyncio.gather(*tasks))
+    loop.run_until_complete(start())
     loop.close()
 
 
 async def parse_first_page(page):
-    try:
-        random_sleep = random.randint(1, 20)
-        await asyncio.sleep(random_sleep)
-        print('start')
-        async with aiohttp.ClientSession(cookies=cookies) as session:
-            res = await session.get(page, headers=headers)
-            ret = await res.text(encoding='utf8')
-            ret = json.loads(ret)
-            if 'equip_list' not in ret:
-                print(ret)
-                print(page)
-                return
-            for item in ret['equip_list']:
-                try:
-                    tmp = {}
-                    tmp['serverid'] = item['serverid']
-                    tmp['ordersn'] = item['game_ordersn']
-                    price = item['price']
-                    detail_page = equipquery.format(**tmp)
-                    detail = await session.get(detail_page)
-                    # print(detail_page)
-                    content = await detail.text(errors='ignore')
-                    doc = pq(content)
-                    text = doc('#equip_desc_value').text()
-                    equip_data = parse_text(text)
-                    equip_data = eval(equip_data)
-                    await parse_attack(equip_data, detail_page, price)
-                    await asyncio.sleep(5)
-                except Exception:
-                    traceback.print_exc()
-            return
-    except Exception:
-        traceback.print_exc()
+    async with aiohttp.ClientSession(cookies=cookies) as session:
+        res = await session.get(page, headers=headers)
+        ret = await res.text(encoding='utf8')
+        ret = json.loads(ret)
+        if 'equip_list' not in ret:
+            return False
+        if len(ret['equip_list']) == 0:
+            return False
+        for item in ret['equip_list']:
+            tmp = {}
+            tmp['serverid'] = item['serverid']
+            tmp['ordersn'] = item['game_ordersn']
+            price = item['price']
+            detail_page = equipquery.format(**tmp)
+            detail = await session.get(detail_page)
+            # print(detail_page)
+            content = await detail.text(errors='ignore')
+            doc = pq(content)
+            text = doc('#equip_desc_value').text()
+            equip_data = parse_text(text)
+            equip_data = eval(equip_data)
+            await parse_attack(equip_data, detail_page, price)
+            await asyncio.sleep(1)
+        return True
 
+async def start():
+    for i in range(1, 100):
+        page = url.format(i)
+        print('Page:\t', i)
+        try:
+            ret = await parse_first_page(page)
+            if ret:
+                await asyncio.sleep(2)
+            else:
+                break
+        except:
+            traceback.print_exc()
+            continue
 
 def parse_text(s):
     """解析混淆字符串"""
@@ -109,43 +114,39 @@ def parse_text(s):
     return s
 
 
+
 async def parse_attack(data, url, price):
     """读取伤害"""
     # print(data['AllEquip'][2]['cDesc'])
-    try:
-        global RESULT
-        if 6 not in data['AllEquip']:
-            return
-        raw_text = data['AllEquip'][6]['cDesc']
-        text = raw_text.split('#r')
-        attack = text[3].split(' ')
-        attack = [i.replace('+', '') for i in attack]
-        if '伤害' in attack[0]:
-            attack_num = int(attack[1]) + int(attack[3]) / 3.0
-        elif '命中' in attack[0]:
-            attack_num = int(attack[3]) + int(attack[1]) / 3.0
-        else:
-            print(attack)
-            raise ValueError(attack)
-        # print(attack_num, url)
-        extra_attack = 0
-        stone = 0
-        if '宝石' in text[5]:
-            stone = int(text[5].split(' ')[1])
-            if stone < 10:
-                extra_attack = 3.3 * (10 - stone)
-        attack_total = attack_num + extra_attack
-        if attack_total >= 670:
-            print(url)
-            path = 'cbg_result.txt'
-            content = "\n".join([str(attack_total), price, url, ''])
-            async with aiofiles.open(path, 'a+') as f:
-                await f.write(content)
-    except Exception:
-        pass
+    global RESULT
+    if 6 not in data['AllEquip']:
+        return
+    raw_text = data['AllEquip'][6]['cDesc']
+    text = raw_text.split('#r')
+    attack = text[3].split(' ')
+    attack = [i.replace('+', '') for i in attack]
+    if '伤害' in attack[0]:
+        attack_num = int(attack[1]) + int(attack[3]) / 3.0
+    elif '命中' in attack[0]:
+        attack_num = int(attack[3]) + int(attack[1]) / 3.0
+    else:
+        print(attack)
+        raise ValueError(attack)
+    # print(attack_num, url)
+    extra_attack = 0
+    stone = 0
+    if '宝石' in text[5]:
+        stone = int(text[5].split(' ')[1])
+        if stone < 10:
+            extra_attack = 3.3 * (10 - stone)
+    attack_total = attack_num + extra_attack
+    if attack_total >= 650:
+        print(url)
+        path = 'cbg_result.txt'
+        content = " ".join([str(attack_total), price, url, '\n'])
+        async with aiofiles.open(path, 'a+') as f:
+            await f.write(content)
 
-    # print(url)
-    # print(attack, attack_num, attack_total)
 
 
 if __name__ == '__main__':

@@ -21,7 +21,7 @@ except ImportError:
     import json
 
 host = 'http://xyq.cbg.163.com'
-url = 'http://xyq.cbg.163.com/cgi-bin/xyq_overall_search.py?j5w7y1yx&level_min=109&level_max=109&expt_total=68&bb_expt_total=68&skill_qiang_shen=129&act=overall_search_role&page={0}'
+url = 'http://xyq.cbg.163.com/cgi-bin/xyq_overall_search.py?j5w7y1yx&level_min=109&level_max=109&expt_total=51&bb_expt_total=68&skill_qiang_shen=129&act=overall_search_role&page={0}'
 equipquery = 'http://xyq.cbg.163.com/cgi-bin/equipquery.py?act=overall_search_show_detail&serverid={serverid}&ordersn={ordersn}'
 # equipquery = 'http://xyq.cbg.163.com/cgi-bin/equipquery.py?act=overall_search_show_detail&serverid=127&ordersn=280_1501152627_282072511&equip_refer=10'
 headers = {
@@ -83,7 +83,7 @@ async def parse_first_page(page):
             text = doc('#equip_desc_value').text()
             equip_data = parse_text(text)
             equip_data = eval(equip_data)
-            await parse_attack(equip_data, detail_page, price)
+            # await parse_attack(equip_data, detail_page, price)
             await parse_lingli(equip_data, detail_page, price)
             await asyncio.sleep(1)
         return True
@@ -121,11 +121,20 @@ async def parse_lingli(data, url, price):
         return
     raw_text = data['AllEquip'][4]['cDesc']
     text = raw_text.split('#r')
+    tmp = text[2].split('+')
+    if len(tmp)
     current = int(text[2].split('+')[1])
-    if len(text) > 4:
+    stone_lingli_count = 0
+    if len(text) > 4 and '宝石' in raw_text:
         tmp = text[4].split(' ')
         if len(tmp) > 1:
-            stone_count = int(tmp[1])
+            try:                
+                stone_count = int(tmp[1])
+            except Exception as e:
+                print(e)
+                print(tmp)
+                print(text)
+                return
         else:
             stone_count = 0
         if stone_count < 10:
@@ -145,7 +154,8 @@ async def parse_lingli(data, url, price):
 
     total = current + stone_lingli_count + ronglian_lingli_count
     # print(total)
-    if total >= 225:
+    if total >= 228:
+        print(url)
         path = 'cbg_result_lingli.txt'
         if not os.path.exists(path):
             os.system('touch %s' % path)

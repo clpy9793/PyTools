@@ -21,7 +21,8 @@ except ImportError:
     import json
 
 host = 'http://xyq.cbg.163.com'
-url = 'http://xyq.cbg.163.com/cgi-bin/xyq_overall_search.py?j5w7y1yx&level_min=109&level_max=109&expt_total=68&bb_expt_total=68&skill_qiang_shen=129&act=overall_search_role&page={0}'
+url = 'http://xyq.cbg.163.com/cgi-bin/xyq_overall_search.py?\
+j5w7y1yx&level_min=109&level_max=109&expt_total=68&bb_expt_total=68&skill_qiang_shen=129&act=overall_search_role&page={0}'
 equipquery = 'http://xyq.cbg.163.com/cgi-bin/equipquery.py?act=overall_search_show_detail&serverid={serverid}&ordersn={ordersn}'
 # equipquery = 'http://xyq.cbg.163.com/cgi-bin/equipquery.py?act=overall_search_show_detail&serverid=127&ordersn=280_1501152627_282072511&equip_refer=10'
 headers = {
@@ -35,9 +36,19 @@ headers = {
     "Host": "xyq.cbg.163.com",
     "Proxy-Connection": "keep-alive",
 }
-cookie = "usertrack=c+xxClk/nMWwqx6gA0c6Ag==; _ntes_nnid=56ccb8d12c2809749e5e3c95057ab2e3,1497341097197; _ntes_nuid=56ccb8d12c2809749e5e3c95057ab2e3; _ga=GA1.2.1655429040.1497341099; __s_=1; P_INFO=1753166645@qq.com|1501476903|0|urs|11&11|shh&1501423110&urs#shh&null#10#0#0|&0|xyq&urs|1753166645@qq.com; no_login_mark=1; fingerprint=3395941467; overall_sid=EhTV8RwQz1T6_e6ZlQQ_Kgo6v6Ihkh1acqk6gaZa"
+cookie = [
+    "usertrack=c+xxClk/nMWwqx6gA0c6Ag==; ",
+    "_ntes_nnid=56ccb8d12c2809749e5e3c95057ab2e3,1497341097197;",
+    " _ntes_nuid=56ccb8d12c2809749e5e3c95057ab2e3;",
+    " _ga=GA1.2.1655429040.1497341099;",
+    " __s_=1;",
+    " P_INFO=1753166645@qq.com|1501476903|0|urs|11&11|shh&1501423110&urs#shh&null#10#0#0|&0|xyq&urs|1753166645@qq.com;",
+    " no_login_mark=1;",
+    " fingerprint=3395941467; ",
+    "overall_sid=EhTV8RwQz1T6_e6ZlQQ_Kgo6v6Ihkh1acqk6gaZa"
+]
 cookies = {
-    'cookies': cookie.split(';')
+    'cookies': cookie
 }
 
 RESULT = []
@@ -84,9 +95,10 @@ async def parse_first_page(page):
             equip_data = parse_text(text)
             equip_data = eval(equip_data)
             await parse_attack(equip_data, detail_page, price)
-            await parse_lingli(equip_data, detail_page, price)
+            # await parse_lingli(equip_data, detail_page, price)
             await asyncio.sleep(1)
         return True
+
 
 async def start():
     for i in range(1, 100):
@@ -102,6 +114,7 @@ async def start():
             traceback.print_exc()
             continue
 
+
 def parse_text(s):
     """解析混淆字符串"""
     s = s.replace('\n', '')
@@ -114,6 +127,7 @@ def parse_text(s):
     s = s.replace('(', '{')
     s = s.replace(')', '}')
     return s
+
 
 async def parse_lingli(data, url, price):
     '''读取灵力'''
@@ -134,14 +148,13 @@ async def parse_lingli(data, url, price):
             stone_lingli_count = 0
     ronglian_lingli_count = 0
 
-    if '熔炼' in raw_text:        
-            tmp = re.search(r'(\d+)', text[-1])
-            # print(tmp)
-            # print(text[-1])
-            if tmp:
-                if text[-1][0] == '+':
-                    ronglian_lingli_count = int(tmp[0])
-
+    if '熔炼' in raw_text:
+        tmp = re.search(r'(\d+)', text[-1])
+        # print(tmp)
+        # print(text[-1])
+        if tmp:
+            if text[-1][0] == '+':
+                ronglian_lingli_count = int(tmp[0])
 
     total = current + stone_lingli_count + ronglian_lingli_count
     # print(total)
@@ -152,6 +165,7 @@ async def parse_lingli(data, url, price):
         content = " ".join([str(total), price, url, '\n'])
         async with aiofiles.open(path, 'a+') as f:
             await f.write(content)
+
 
 async def parse_attack(data, url, price):
     """读取伤害"""
@@ -178,13 +192,12 @@ async def parse_attack(data, url, price):
         if stone < 10:
             extra_attack = 3.3 * (10 - stone)
     attack_total = attack_num + extra_attack
-    if attack_total >= 650:
+    if attack_total >= 670:
         print(url)
         path = 'cbg_result.txt'
         content = " ".join([str(attack_total), price, url, '\n'])
         async with aiofiles.open(path, 'a+') as f:
             await f.write(content)
-
 
 
 if __name__ == '__main__':

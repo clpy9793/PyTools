@@ -1,11 +1,14 @@
 import time
 import socket
 import struct
+import logging
 import datetime
 import traceback
 import threading
 from ctypes import *
 from netaddr import IPNetwork, IPAddress
+
+logging.basicConfig(level=logging.DEBUG)
 
 PROTOCOL_MAP = {
     1: "ICMP",
@@ -58,7 +61,7 @@ def bind_addr():
             r = parse_icmp(data[offset:])
             if r['ipb_code'] == r['ipb_type'] == 3:
                 if 'test message'.encode() in data:
-                    print('Host up: ', src)
+                    logging.info("Host up: {}".format(src))
 
 
 def parse_header(data):
@@ -130,9 +133,8 @@ def udp_sender(subnet, msg):
             sock.sendto(msg, addr)
         except PermissionError:
             pass
-            # print('permission error', msg, addr)
         except:
-            traceback.print_exc()
+            logging.error(traceback.format_exc())
 
 
 if __name__ == '__main__':

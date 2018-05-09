@@ -4,26 +4,17 @@
 # @Author  : Your Name (you@example.org)
 # @Link    : http://example.org
 # @Version : $Id$
-from __future__ import print_function
-import os
 import time
-import copy
 import types
-import pandas
+import poplib
 import hashlib
-import binascii
-import threading
-from inspect import signature, isfunction
+import logging
 from functools import wraps
-from traceback import format_exc
-from heapq import *
-from operator import itemgetter
+from urllib.parse import unquote
 from contextlib import contextmanager
-from threading import Semaphore, Thread, Event, Lock
-try:
-    from urllib.parse import unquote
-except ImportError:
-    from urllib import unquote
+from inspect import signature, isfunction
+import pydevd
+import requests
 
 
 class Timer:
@@ -84,29 +75,7 @@ def send_mail():
         "subject": "程序故障",
         "html": "你太棒了！你已成功的从SendCloud发送了一封测试邮件，接下来快登录前台去完善账户信息吧！",
     }
-    pass
-
-
-def patch_crypto_be_discovery():
-    """
-    Monkey patches cryptography's backend detection.
-    Objective: support pyinstaller freezing.
-    """
-    from cryptography.hazmat import backends
-
-    try:
-        from cryptography.hazmat.backends.commoncrypto.backend import backend as be_cc
-    except ImportError:
-        be_cc = None
-
-    try:
-        from cryptography.hazmat.backends.openssl.backend import backend as be_ossl
-    except ImportError:
-        be_ossl = None
-
-    backends._available_backends_list = [
-        be for be in (be_cc, be_ossl) if be is not None
-    ]
+    return requests.post(url, json=params)
 
 
 @try_again(3)
@@ -166,7 +135,8 @@ def gen_drop(drop_id, count, can_repeat, exclude_list, DROP):
     for i, v in enumerate(r):
         if v in DROP:
             rst.extend(
-                gen_drop(v, DROP[drop_id].Items[i]['count'], can_repeat, exclude_list, DROP))
+                gen_drop(v, DROP[drop_id].Items[i]['count'],
+                         can_repeat, exclude_list, DROP))
         else:
             rst.append(v)
     return rst
@@ -220,24 +190,24 @@ def get_seconds():
 class NoMixedCaseMeta(type):
     """拒绝大小写混合的类成员"""
 
-    def __new__(cls, clsname, bases, clsdict):
+    def __new__(mcs, clsname, bases, clsdict):
         for name in clsdict:
             if name.lower() != name:
                 raise TypeError('bad attribute name: {}'.format(name))
-        return super().__new__(cls, clsname, bases, clsdict)
+        return super().__new__(mcs, clsname, bases, clsdict)
 
 
 class Singleton(type):
     """单例"""
 
-    def __init__(self, *args, **kwargs):
-        self.__instance = None
+    def __init__(cls, *args, **kwargs):
+        cls.__instance = None
         super().__init__(*args, **kwargs)
 
-    def __call__(self, *args, **kwargs):
-        if self.__instance is None:
-            self.__instance = super().__call__(*args, **kwargs)
-        return self.__instance
+    def __call__(cls, *args, **kwargs):
+        if cls.__instance is None:
+            cls.__instance = super().__call__(*args, **kwargs)
+        return cls.__instance
 
 
 class Profiled:
@@ -254,8 +224,8 @@ class Profiled:
     def __get__(self, instance, cls):
         if instance is None:
             return self
-        else:
-            return types.MethodType(self, instance)
+
+        return types.MethodType(self, instance)
 
 
 class Route(dict):
@@ -293,7 +263,6 @@ def debugger(func, remote=("192.168.1.178", 13333)):
     """Pycharm快速调试"""
     @wraps(func)
     def wrapper(*args, **kwargs):
-        import pydevd
         try:
             ip, port = remote
             pydevd.settrace(ip, port=port, stderrToServer=True,
@@ -341,37 +310,18 @@ def unquotedata(data):
     return d
 
 
-class ParseFor3721(object):
+def get_mail_list(self):
+    email = ''
+    password = ''
+    pop3_server = ''
+    server = poplib.POP3_SSL(pop3_server)
+    server.set_debuglevel(1)
+    server.user(email)
+    server.pass_(password)
+    _, mails, _ = server.list()
+    msg = "count: {}".format(len(mails))
+    logging.info(msg)
 
-    def __init__(self):
-        import numpy as np
-        import pandas as pd
-        import models.Customer as Customer
-
-    def start(self):
-        df = pd.read_excel('3721.xlsx', skiprows=1).replace(np.nan, '')
-        self.parseDataFrame(df)
-
-    def parseDataFrame(self, df):
-        keys = ["厂家名称", "联系人", "电话", "地址", ]
-        for index, row in df.replace(np.nan, '', regex=True).iterrows():
-            if all((getattr(row, key, None) for key in keys)):
-                self.save_to_db(row)
-
-    def save_to_db(self, series):
-        company = series['厂家名称'].strip()
-        contact = series['联系人'].strip()
-        mobile = series['电话'].strip()
-        address = sereis['地址'].strip()
-        if not Customer.objects.filter(company=company):
-            Customer.objects.create(
-                company=company,
-                contact=contact,
-                mobile=mobile,
-                address=address,
-                business='电视',
-                source='alibaba',
-            )
 
 if __name__ == '__main__':
     pass

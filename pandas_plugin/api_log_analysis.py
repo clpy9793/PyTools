@@ -22,11 +22,12 @@ def run(path):
     df = analysis(data)
     df.to_csv('~/Desktop/api.csv')
 
+
 def analysis(data):
     resp = {}
     columns = [
         '调用次数', '成功率', '成功次数', '失败次数',
-        '最大响应时间', '最小响应时间(ms)', '平均响应时间(ms)',
+        '最大响应时间', '最小响应时间(ms)', '平均响应时间(ms)', 'top99内响应时间(ms)',
     ]
     for uri, call_res in data.items():
         # 初始化参数
@@ -35,26 +36,29 @@ def analysis(data):
         success_call_num = 0
         success_call_max = 0
         success_call_min = 0
-        
-        success_call_avg = 0        
+
+        success_call_avg = 0
         fail_call_num = 0
         fail_call_max = 0
         fail_call_avg = 0
         fail_call_min = 0
+        top99_call = []
+        top99_cost = 0
+        top99_num = 0
 
         if success:
             success_call_num = len(call_res['success'])
             success_call_max = max(call_res['success'])
             success_call_min = min(call_res['success'])
             success_call_avg = sum(call_res['success']) / success_call_num
-            
+            top99_call.extend(success)
 
         if fail:
             fail_call_num = len(call_res['fail'])
             fail_call_max = max(call_res['fail'])
             fail_call_min = min(call_res['fail'])
             fail_call_avg = sum(call_res['fail']) / fail_call_num
-            
+            top99_call.extend(fail)
 
         call_num = success_call_num + fail_call_num
         success_rate = success_call_num / call_num
@@ -63,16 +67,21 @@ def analysis(data):
             call_min = max(success_call_min, fail_call_min)
         else:
             call_min = min(success_call_min, fail_call_min)
-        call_avg = sum([sum(call_res['success']), 
+        call_avg = sum([sum(call_res['success']),
                         sum(call_res['fail'])]) / call_num
+        top99_call.sort()
+        if top99_call:
+            top99_num = int(call_num * 0.99)
+            top99_cost = top99_call[top99_num]
+
         resp[uri] = [
             call_num, success_rate, success_call_num, fail_call_num,
-            call_max, call_min, call_avg,
+            call_max, call_min, call_avg, top99_cost,
         ]
     df = pd.DataFrame.from_dict(resp, orient='index', columns=columns)
     return df
 
+
 if __name__ == '__main__':
     path = sys.argv[1]
     run(path)
-
